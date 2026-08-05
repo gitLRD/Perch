@@ -2,6 +2,13 @@
 # Shared helpers for Perch hooks. Requires python3 (always present on macOS).
 PERCH_DIR="${PERCH_DIR:-$HOME/.claude/perch}"
 
+perch_tty() {
+  # `tty` prints "not a tty" to stdout when stdin isn't a terminal (hooks are
+  # invoked with a piped payload). Only emit a real device path.
+  local t; t="$(tty 2>/dev/null || true)"
+  case "$t" in /dev/*) printf '%s' "$t";; *) printf '';; esac
+}
+
 perch_detect_host() {
   if [ -n "${CMUX_SURFACE_ID:-}" ] || [ -n "${CMUX_WORKSPACE_ID:-}" ]; then echo cmux; return; fi
   case "${TERM_PROGRAM:-}" in
@@ -27,7 +34,7 @@ perch_write() {
   PERCH_TMP="$tmp" PERCH_PREV="$PERCH_DIR/${sid}.json" \
   SID="$sid" STATE="$state" CWD="$cwd" PROJECT="$project" REASON="$reason" \
   HOST="$host" NOW="$(date +%s)" PID="${PERCH_PID:-$PPID}" \
-  ITERM="${ITERM_SESSION_ID:-}" TMUXPANE="${TMUX_PANE:-}" TTY="$(tty 2>/dev/null || echo)" \
+  ITERM="${ITERM_SESSION_ID:-}" TMUXPANE="${TMUX_PANE:-}" TTY="$(perch_tty)" \
   python3 - <<'PY'
 import json, os
 prev = {}
