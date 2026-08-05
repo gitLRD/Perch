@@ -46,7 +46,7 @@ struct PerchView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            BirdView(size: 22, pulse: bird.pulse).frame(width: 22, height: 22).clipped()
+            BirdView(size: 22, pulse: bird.pulse, alert: bird.alertPulse).frame(width: 22, height: 22).clipped()
             Text("Perch")
                 .font(.system(size: 15, weight: .semibold))
                 .tracking(0.5)
@@ -64,7 +64,7 @@ struct PerchView: View {
 
     private var empty: some View {
         VStack(spacing: 8) {
-            BirdView(size: 34, pulse: bird.pulse).frame(width: 34, height: 34).clipped().opacity(0.7)
+            BirdView(size: 34, pulse: bird.pulse, alert: bird.alertPulse).frame(width: 34, height: 34).clipped().opacity(0.7)
             Text("All clear").foregroundStyle(Palette.grey).font(.callout)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 26)

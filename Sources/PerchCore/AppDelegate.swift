@@ -117,13 +117,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func refresh() {
         store.reload()
-        for s in detector.newlyWaiting(store.sessions) { notifier.notify(s) }
+        let newlyOrange = detector.newlyWaiting(store.sessions)
+        for s in newlyOrange { notifier.notify(s) }
         applyMenuBarIcon(waiting: store.sessions.filter { $0.state == .waiting }.count)
-        // Nudge the bird only when the session set actually changes — not on
-        // idle 30s reloads — so it moves "when something happens".
+        // A session going orange (waiting on you) gets an emphatic flap + hop.
+        // Other changes get a gentle nudge — but only when the session set
+        // actually changes, not on idle reloads, so the bird moves "when
+        // something happens".
         let signature = store.sessions.map { "\($0.sessionId):\($0.state.rawValue)" }.joined(separator: ",")
-        if signature != lastSignature {
-            lastSignature = signature
+        let changed = signature != lastSignature
+        lastSignature = signature
+        if !newlyOrange.isEmpty {
+            bird.alert()
+        } else if changed {
             bird.poke()
         }
         resizeToFit()
