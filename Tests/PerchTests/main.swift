@@ -4,4 +4,5 @@ import Foundation
 sessionStatusTests()
 sessionStoreTests()
 notifierTests()
+jumpDispatcherTests()
 T.finish()
