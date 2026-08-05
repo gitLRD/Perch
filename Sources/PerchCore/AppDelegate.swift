@@ -50,7 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.menu = menu
 
         panel = FloatingPanel(contentRect: NSRect(x: 0, y: 0, width: 262, height: 320))
-        hosting = NSHostingView(rootView: PerchView(
+        hosting = ClickThroughHostingView(rootView: PerchView(
             store: store,
             bird: bird,
             onJump: { [weak self] s in

@@ -9,7 +9,7 @@ public enum JumpCommand: Equatable, Sendable {
 
 /// Builds (and optionally runs) the command that raises the terminal a session
 /// lives in. Building is pure and unit-tested; `run` has a dry-run mode.
-public struct JumpDispatcher {
+public struct JumpDispatcher: Sendable {
     let cmux: CmuxLookup
 
     public init(cmux: CmuxLookup) { self.cmux = cmux }

@@ -16,6 +16,9 @@ final class FloatingPanel: NSPanel {
         isOpaque = false
         backgroundColor = .clear
         hasShadow = false   // the SwiftUI card draws its own shadow
+        // Let a click on a row trigger immediately instead of first stealing
+        // key status (which would need a second click).
+        becomesKeyOnlyIfNeeded = true
         titleVisibility = .hidden
         titlebarAppearsTransparent = true
         standardWindowButton(.closeButton)?.isHidden = true
