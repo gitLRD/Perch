@@ -11,6 +11,7 @@ A native macOS floating mini-window that shows, at a glance, **which Claude Code
 - **Alerts you** with a native notification the moment a session goes from working → waiting.
 - **Click to jump** straight to the terminal that needs you. First-class for **cmux**; also iTerm2, tmux, and best-effort VS Code.
 - **Mark done** to clear a session — it comes back if it does more work and stops again.
+- **Stays current** — checks weekly for a new release, with a manual "Check for Updates…" in the menu.
 
 ## Install (for users)
 
@@ -38,6 +39,9 @@ Look for the 🐦 in your menu bar; the floating panel sits in the top-right cor
 - **Hide the window** — click the ✕ in the header, or use **Hide Window** from the 🐦 menu. Bring it back with **Show Window** (or ⌘P) from the same menu.
 - **Notifications** — when a session newly starts waiting, Perch posts a notification; clicking it jumps you to that session.
 - **Move it** — drag the panel anywhere; it remembers where you put it.
+- **Updates** — Perch checks for a new release weekly and adds an "Update available" item to the menu when there is one; run **Check for Updates…** anytime. (The check uses the public GitHub releases API, so it's active once the repo is public.)
+
+> **When do sessions appear?** A session shows up the first time it fires a hook *after* you install Perch — i.e. its next turn (a prompt, a stop, or a permission request). Sessions that were already mid-work or sitting idle from before the install stay invisible until they next do something.
 
 <p align="center">
   <img src="docs/images/perch-empty.png" alt="Perch showing the All clear empty state" width="360">

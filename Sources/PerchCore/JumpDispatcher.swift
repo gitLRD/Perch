@@ -18,11 +18,15 @@ public struct JumpDispatcher {
         switch s.host {
         case "cmux":
             guard let surf = cmux.surface(for: s.sessionId) else {
-                return .shell(["open", "-a", "cmux"])
+                return .shell(["open", "-b", "com.cmuxterm.app"])
             }
+            // Switch the surface inside cmux, then raise the cmux app at the OS
+            // level so macOS brings its window forward / switches to its Space
+            // (even if it's fullscreen on another Space).
             return .sequence([
                 .shell(["cmux", "select-workspace", "--workspace", surf.workspaceId]),
                 .shell(["cmux", "focus-panel", "--panel", surf.surfaceId, "--workspace", surf.workspaceId]),
+                .shell(["open", "-b", "com.cmuxterm.app"]),
             ])
         case "iterm2":
             let sid = s.itermSessionId ?? ""
@@ -81,6 +85,17 @@ public struct JumpDispatcher {
         let toolPaths = "/opt/homebrew/bin:/usr/local/bin:\(NSHomeDirectory())/.local/bin"
         env["PATH"] = toolPaths + ":" + (env["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin")
         p.environment = env
-        try? p.run()
+        let out = Pipe()
+        p.standardOutput = out
+        p.standardError = out
+        do {
+            try p.run()
+            p.waitUntilExit()
+            let data = out.fileHandleForReading.readDataToEndOfFile()
+            let text = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            Log.write("  ran: \(args.joined(separator: " ")) -> exit \(p.terminationStatus) \(text.isEmpty ? "" : "| \(text)")")
+        } catch {
+            Log.write("  FAILED to launch: \(args.joined(separator: " ")) -> \(error)")
+        }
     }
 }

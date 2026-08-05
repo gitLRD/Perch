@@ -16,6 +16,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let notifier = Notifier()
     private var dispatcher: JumpDispatcher!
     private let clock = LiveClock()
+    private let updater = Updater(currentVersion: PerchVersion)
+    private var updateItem: NSMenuItem!
+    private var updateURL: URL?
 
     private var perchDir: URL {
         let u = URL(fileURLWithPath: NSHomeDirectory() + "/.claude/perch")
@@ -37,6 +40,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         toggleItem = NSMenuItem(title: "Hide Window", action: #selector(togglePanel), keyEquivalent: "p")
         menu.addItem(toggleItem)
         menu.addItem(.separator())
+        updateItem = NSMenuItem(title: "Update available", action: #selector(openUpdate), keyEquivalent: "")
+        updateItem.isHidden = true
+        menu.addItem(updateItem)
+        menu.addItem(NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdatesManual), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Perch \(PerchVersion)", action: nil, keyEquivalent: ""))
+        menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Perch", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
 
@@ -47,7 +56,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onJump: { [weak self] s in
                 guard let self else { return }
                 self.bird.poke()
-                self.dispatcher.run(self.dispatcher.command(for: s), dryRun: false)
+                let dispatcher = self.dispatcher!
+                let cmd = dispatcher.command(for: s)
+                Log.write("onJump session=\(s.sessionId.prefix(8)) project=\(s.project) host=\(s.host) -> \(dispatcher.run(cmd, dryRun: true).joined(separator: " ; "))")
+                DispatchQueue.global(qos: .userInitiated).async {
+                    dispatcher.run(cmd, dryRun: false)
+                }
             },
             onDismiss: { [weak self] s in self?.bird.poke(); self?.store.dismiss(s) },
             onClose: { [weak self] in self?.hidePanel() },
@@ -61,6 +75,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.store.reload() }
+        }
+
+        // Auto-update: check on launch if a week has elapsed, then re-evaluate daily.
+        if updater.checkDue() { runUpdateCheck(manual: false) }
+        Timer.scheduledTimer(withTimeInterval: 24 * 3600, repeats: true) { [weak self] _ in
+            Task { @MainActor in if self?.updater.checkDue() == true { self?.runUpdateCheck(manual: false) } }
+        }
+    }
+
+    @objc private func checkForUpdatesManual() { runUpdateCheck(manual: true) }
+
+    @objc private func openUpdate() {
+        NSWorkspace.shared.open(updateURL ?? Updater.releasesPage)
+    }
+
+    private func runUpdateCheck(manual: Bool) {
+        updater.check { result in
+            Task { @MainActor in self.handleUpdate(result, manual: manual) }
+        }
+    }
+
+    private func handleUpdate(_ result: Updater.Result, manual: Bool) {
+        switch result {
+        case .updateAvailable(let tag, let url):
+            updateURL = url
+            updateItem.title = "⬆︎ Update available: \(tag)"
+            updateItem.isHidden = false
+            notifier.info(title: "Perch update available", body: "\(tag) is out — click to open the release.", url: url)
+        case .upToDate(let v):
+            updateItem.isHidden = true
+            if manual { notifier.info(title: "Perch is up to date", body: "You're on the latest version (\(v)).") }
+        case .failed(let why):
+            if manual { notifier.info(title: "Couldn't check for updates", body: why) }
         }
     }
 
@@ -138,10 +185,16 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
                                             didReceive response: UNNotificationResponse,
                                             withCompletionHandler completionHandler: @escaping () -> Void) {
-        let id = response.notification.request.content.userInfo["sessionId"] as? String
+        let info = response.notification.request.content.userInfo
+        let id = info["sessionId"] as? String
+        let urlString = info["url"] as? String
         Task { @MainActor in
-            if let id, let s = self.store.sessions.first(where: { $0.sessionId == id }) {
-                self.dispatcher.run(self.dispatcher.command(for: s), dryRun: false)
+            if let urlString, let url = URL(string: urlString) {
+                NSWorkspace.shared.open(url)
+            } else if let id, let s = self.store.sessions.first(where: { $0.sessionId == id }) {
+                let dispatcher = self.dispatcher!
+                let cmd = dispatcher.command(for: s)
+                DispatchQueue.global(qos: .userInitiated).async { dispatcher.run(cmd, dryRun: false) }
             }
         }
         completionHandler()

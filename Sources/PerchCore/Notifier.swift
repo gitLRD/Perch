@@ -25,6 +25,18 @@ public final class Notifier {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
+    /// A generic informational notification (e.g. update available). An optional
+    /// URL is opened when the notification is clicked.
+    public func info(title: String, body: String, url: URL? = nil) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        if let url { content.userInfo = ["url": url.absoluteString] }
+        let req = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(req)
+    }
+
     public func notify(_ s: SessionStatus) {
         let content = UNMutableNotificationContent()
         content.title = "\(s.project) is waiting"
