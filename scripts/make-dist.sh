@@ -60,7 +60,7 @@ else
 fi
 open "$APP"
 echo
-echo "✓ Perch installed. Look for the owl 🦉 in your menu bar (top-right)."
+echo "✓ Perch installed. Look for the bird 🐦 in your menu bar (top-right)."
 echo "  Hooks take effect for NEW Claude Code sessions. Grant notifications when asked."
 INSTALL
 chmod +x "$STAGE/install.sh"
