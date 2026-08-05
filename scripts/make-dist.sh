@@ -39,6 +39,7 @@ except Exception:
 hooks = cfg.setdefault("hooks", {})
 mapping = {
     "SessionStart": "perch-session-start.sh", "UserPromptSubmit": "perch-user-prompt.sh",
+    "PostToolUse": "perch-post-tool.sh",
     "Stop": "perch-stop.sh", "Notification": "perch-notification.sh", "SessionEnd": "perch-session-end.sh",
 }
 def present(arr, cmd):

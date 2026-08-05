@@ -31,6 +31,12 @@ assert "started_at preserved"  "[ \"\$(field '$f' started_at)\" = '$started' ]"
 echo '{"session_id":"s1","cwd":"/tmp/proj","message":"Claude needs your permission to run"}' | "$DIR/perch-notification.sh"
 assert "reason permission"     "[ \"\$(field '$f' reason)\" = permission ]"
 
+# PostToolUse re-asserts working after an approved tool runs, clearing the
+# stale "waiting" left by the permission prompt, and preserves started_at.
+echo '{"session_id":"s1","cwd":"/tmp/proj"}' | "$DIR/perch-post-tool.sh"
+assert "post-tool back to working" "[ \"\$(field '$f' state)\" = working ]"
+assert "started_at still preserved" "[ \"\$(field '$f' started_at)\" = '$started' ]"
+
 # Atomicity: no leftover temp files
 assert "no temp files"         "[ -z \"\$(ls -a '$PERCH_DIR' | grep '^[.]s1[.]' || true)\" ]"
 
