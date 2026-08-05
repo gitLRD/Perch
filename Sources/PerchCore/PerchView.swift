@@ -75,10 +75,11 @@ struct PerchView: View {
         HStack(spacing: 9) {
             dot(s)
             VStack(alignment: .leading, spacing: 1) {
-                Text(s.project)
+                Text(s.name)
                     .font(.system(size: 13, weight: waiting ? .semibold : .regular))
                     .foregroundStyle(waiting ? Palette.paper : Palette.paper.opacity(0.6))
                     .lineLimit(1)
+                    .truncationMode(.tail)
                 Text(elapsed(s))
                     .font(.system(size: 11))
                     .foregroundStyle(waiting ? Palette.orange.opacity(0.85) : Palette.grey)

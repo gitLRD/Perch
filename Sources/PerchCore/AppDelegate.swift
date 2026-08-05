@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let notifier = Notifier()
     private var dispatcher: JumpDispatcher!
     private let clock = LiveClock()
+    private var titleProvider: CmuxTitleProvider!
     private let updater = Updater(currentVersion: PerchVersion)
     private var updateItem: NSMenuItem!
     private var updateURL: URL?
@@ -30,8 +31,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Notifier.requestAuthorization()
         UNUserNotificationCenter.current().delegate = self
 
-        store = SessionStore(dir: perchDir)
-        dispatcher = JumpDispatcher(cmux: CmuxRegistry())
+        let registry = CmuxRegistry()
+        titleProvider = CmuxTitleProvider(cmux: registry)
+        store = SessionStore(dir: perchDir, titles: titleProvider)
+        dispatcher = JumpDispatcher(cmux: registry)
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         applyMenuBarIcon(waiting: 0)
@@ -72,6 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         watcher = DirectoryWatcher(url: perchDir) { [weak self] in self?.refresh() }
         refresh()
+        titleProvider.refresh { [weak self] in self?.store.reload(); self?.resizeToFit() }
 
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.store.reload() }
@@ -123,6 +127,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             bird.poke()
         }
         resizeToFit()
+        // Refresh tab titles off the main thread, then re-render with them.
+        titleProvider.refresh { [weak self] in
+            self?.store.reload()
+            self?.resizeToFit()
+        }
     }
 
     /// Shrink the panel to the card's natural height so the transparent area

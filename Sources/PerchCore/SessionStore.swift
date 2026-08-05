@@ -6,12 +6,15 @@ public final class SessionStore: ObservableObject {
     private let dir: URL
     private let pids: PidChecker
     private let clock: Clock
+    private let titles: TitleProvider?
     private let defaultsKey = "PerchDismissedEpisodes"
 
-    public init(dir: URL, pids: PidChecker = LivePidChecker(), clock: Clock = LiveClock()) {
+    public init(dir: URL, pids: PidChecker = LivePidChecker(), clock: Clock = LiveClock(),
+                titles: TitleProvider? = nil) {
         self.dir = dir
         self.pids = pids
         self.clock = clock
+        self.titles = titles
     }
 
     private var dismissed: Set<String> {
@@ -33,10 +36,11 @@ public final class SessionStore: ObservableObject {
         var loaded: [SessionStatus] = []
         for f in files where f.pathExtension == "json" {
             guard let data = try? Data(contentsOf: f),
-                  let s = try? SessionStatus.decode(from: data) else { continue }  // skip corrupt/half-written
+                  var s = try? SessionStatus.decode(from: data) else { continue }  // skip corrupt/half-written
             if s.state == .ended { continue }
             if !pids.isAlive(s.pid) { continue }
             if dismissedNow.contains(s.episodeKey) { continue }
+            s.displayName = titles?.title(for: s)
             loaded.append(s)
         }
         sessions = sorted(loaded)

@@ -19,6 +19,12 @@ public struct SessionStatus: Codable, Identifiable, Sendable {
     public let itermSessionId: String?
     public let tmuxPane: String?
     public let tty: String?
+    /// Resolved terminal-tab title (e.g. the Claude session summary). Set by the
+    /// app after decode via a TitleProvider; not part of the on-disk schema.
+    public var displayName: String? = nil
+
+    /// What the panel shows: the tab title when we have one, else the folder.
+    public var name: String { displayName ?? project }
 
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id", cwd, project, pid, state, reason
