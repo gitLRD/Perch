@@ -37,6 +37,14 @@ echo '{"session_id":"s1","cwd":"/tmp/proj"}' | "$DIR/perch-post-tool.sh"
 assert "post-tool back to working" "[ \"\$(field '$f' state)\" = working ]"
 assert "started_at still preserved" "[ \"\$(field '$f' started_at)\" = '$started' ]"
 
+# A fresh notification re-stalls to waiting, then PreToolUse (a tool starting)
+# asserts working — this keeps a long-running command showing working instead
+# of the stale waiting a notification/question prompt left behind.
+echo '{"session_id":"s1","cwd":"/tmp/proj","message":"Claude needs your permission"}' | "$DIR/perch-notification.sh"
+assert "notification re-stalls waiting" "[ \"\$(field '$f' state)\" = waiting ]"
+echo '{"session_id":"s1","cwd":"/tmp/proj"}' | "$DIR/perch-pre-tool.sh"
+assert "pre-tool asserts working" "[ \"\$(field '$f' state)\" = working ]"
+
 # Atomicity: no leftover temp files
 assert "no temp files"         "[ -z \"\$(ls -a '$PERCH_DIR' | grep '^[.]s1[.]' || true)\" ]"
 
