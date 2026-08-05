@@ -9,6 +9,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: FloatingPanel!
     private var hosting: NSHostingView<PerchView>!
     private var store: SessionStore!
+    private let bird = BirdController()
+    private var lastSignature = ""
     private var watcher: DirectoryWatcher!
     private var detector = TransitionDetector()
     private let notifier = Notifier()
@@ -41,11 +43,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel = FloatingPanel(contentRect: NSRect(x: 0, y: 0, width: 262, height: 320))
         hosting = NSHostingView(rootView: PerchView(
             store: store,
+            bird: bird,
             onJump: { [weak self] s in
                 guard let self else { return }
+                self.bird.poke()
                 self.dispatcher.run(self.dispatcher.command(for: s), dryRun: false)
             },
-            onDismiss: { [weak self] s in self?.store.dismiss(s) },
+            onDismiss: { [weak self] s in self?.bird.poke(); self?.store.dismiss(s) },
             onClose: { [weak self] in self?.hidePanel() },
             clock: clock))
         panel.contentView = hosting
@@ -64,6 +68,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.reload()
         for s in detector.newlyWaiting(store.sessions) { notifier.notify(s) }
         applyMenuBarIcon(waiting: store.sessions.filter { $0.state == .waiting }.count)
+        // Nudge the bird only when the session set actually changes — not on
+        // idle 30s reloads — so it moves "when something happens".
+        let signature = store.sessions.map { "\($0.sessionId):\($0.state.rawValue)" }.joined(separator: ",")
+        if signature != lastSignature {
+            lastSignature = signature
+            bird.poke()
+        }
         resizeToFit()
     }
 
@@ -108,6 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showPanel() {
         resizeToFit()
         panel.orderFrontRegardless()
+        bird.poke()
         toggleItem?.title = "Hide Window"
     }
 }

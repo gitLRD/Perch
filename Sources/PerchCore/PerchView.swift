@@ -10,6 +10,7 @@ enum Palette {
 
 struct PerchView: View {
     @ObservedObject var store: SessionStore
+    @ObservedObject var bird: BirdController
     var onJump: (SessionStatus) -> Void
     var onDismiss: (SessionStatus) -> Void
     var onClose: () -> Void
@@ -45,7 +46,7 @@ struct PerchView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            BirdView(size: 30).frame(width: 30, height: 30).clipped()
+            BirdView(size: 22, pulse: bird.pulse).frame(width: 22, height: 22).clipped()
             Text("Perch")
                 .font(.system(size: 15, weight: .semibold))
                 .tracking(0.5)
@@ -63,7 +64,7 @@ struct PerchView: View {
 
     private var empty: some View {
         VStack(spacing: 8) {
-            BirdView(size: 40).frame(width: 40, height: 40).clipped().opacity(0.6)
+            BirdView(size: 34, pulse: bird.pulse).frame(width: 34, height: 34).clipped().opacity(0.7)
             Text("All clear").foregroundStyle(Palette.grey).font(.callout)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 26)
