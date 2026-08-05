@@ -121,26 +121,9 @@ def make_icon_source():
     print("wrote assets/bird-1024.png")
 
 
-def make_menubar():
-    S = 36 * SS
-    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    black = (0, 0, 0, 255)
-    cx = S / 2
-    # ear tufts
-    for ex, sign in ((-0.22, -1), (0.22, 1)):
-        tx = cx + ex * S
-        d.polygon([(tx, S * 0.34), (tx + sign * S * 0.09, S * 0.10), (tx + sign * S * 0.15, S * 0.30)], fill=black)
-    d.ellipse([S * 0.18, S * 0.24, S * 0.82, S * 0.92], fill=black)   # body/head
-    for ex in (0.34, 0.52):                                          # eye knockouts (low = looking down)
-        d.ellipse([S * ex, S * 0.46, S * (ex + 0.14), S * 0.66], fill=(0, 0, 0, 0))
-    img = img.resize((36, 36), Image.LANCZOS)
-    img.save(os.path.join(ASSETS, "bird-menubar.png"))
-    print("wrote assets/bird-menubar.png")
-
-
 if __name__ == "__main__":
     make_rest()
     make_gif()
     make_icon_source()
-    make_menubar()
+    # The menu-bar glyph now uses Apple's bird.fill SF Symbol (see AppDelegate),
+    # so no hand-drawn menu-bar asset is generated.

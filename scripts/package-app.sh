@@ -22,7 +22,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 PLIST
 # Assets (added in Task 9) copied here if present.
 [ -f assets/bird.gif ] && cp assets/bird.gif "$APP/Contents/Resources/bird.gif" || true
-[ -f assets/bird-menubar.png ] && cp assets/bird-menubar.png "$APP/Contents/Resources/bird-menubar.png" || true
+[ -f assets/bird-rest.png ] && cp assets/bird-rest.png "$APP/Contents/Resources/bird-rest.png" || true
 [ -f assets/AppIcon.icns ] && cp assets/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns" || true
 codesign --force --deep --sign - "$APP"
 echo "Built $APP"

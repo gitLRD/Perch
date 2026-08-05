@@ -74,6 +74,13 @@ public struct JumpDispatcher {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         p.arguments = args
+        // GUI apps launched via `open` inherit a minimal PATH that omits
+        // Homebrew, so `cmux` / `code` / `tmux` wouldn't resolve. Prepend the
+        // usual tool locations.
+        var env = ProcessInfo.processInfo.environment
+        let toolPaths = "/opt/homebrew/bin:/usr/local/bin:\(NSHomeDirectory())/.local/bin"
+        env["PATH"] = toolPaths + ":" + (env["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin")
+        p.environment = env
         try? p.run()
     }
 }
