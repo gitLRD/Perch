@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Perch's mascot: a little owl-ish bird perched on a branch, looking DOWN at
-your work. Themed black / white / Claude-orange. Ear tufts + a real beak + a
-perch branch make it read as a bird even at menu-bar size.
-  assets/bird.gif          short one-shot motion (blink + tilt), transparent
-  assets/bird-rest.png     the calm resting frame (shown when idle)
-  assets/bird-1024.png     app icon (white owl on warm-ink card)
-  assets/bird-menubar.png  monochrome template glyph
+"""Perch's mascot: a plump little bird in side profile, perched on a branch,
+peering DOWN at your work. Side profile (with a clear beak + tail + one eye)
+reads unmistakably as a bird — and has no ear-tufts to mistake for horns.
+Themed black / white / Claude-orange.
+  assets/bird.gif       short one-shot motion (head bob + blink), transparent
+  assets/bird-rest.png  the calm resting frame (shown when idle)
+  assets/bird-1024.png  app icon (white bird on warm-ink card)
 No external tools required.
 """
 import os
@@ -25,86 +25,90 @@ WHITE  = (255, 255, 255)
 PUPIL  = INK
 
 
-def draw_owl(size, look=(0.0, 0.7), blink=False, tilt=0.0, body=PAPER, outline=INK):
-    """One frame of the owl. look = pupil offset (+y = down). tilt = head lean."""
+def draw_bird(size, look=0.6, blink=False, bob=0.0, body=PAPER, outline=INK):
+    """Side-profile bird facing left. look/bob nudge the downward gaze + head."""
     S = size * SS
-    big = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    d = ImageDraw.Draw(big)
-    cx = S / 2
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
     ow = max(2, int(S * 0.014))
 
     # perch branch
-    by = S * 0.90
-    d.rounded_rectangle([S * 0.12, by, S * 0.88, by + S * 0.05], radius=S * 0.025,
+    by = S * 0.86
+    d.rounded_rectangle([S * 0.08, by, S * 0.92, by + S * 0.05], radius=S * 0.025,
                         fill=ORANGE_DEEP, outline=outline, width=ow)
-    d.line([(S * 0.20, by + S * 0.05), (S * 0.14, by + S * 0.10)], fill=ORANGE_DEEP, width=ow)
+    d.line([(S * 0.16, by + S * 0.05), (S * 0.10, by + S * 0.10)], fill=ORANGE_DEEP, width=ow)
 
-    # feet gripping the branch
-    for fx in (-0.11, 0.11):
-        x = cx + fx * S
-        for dx in (-0.03, 0.03):
-            d.line([(x, by - S * 0.01), (x + dx * S, by + S * 0.035)], fill=ORANGE_DEEP, width=int(S * 0.02))
+    # tail sweeping up behind the body (right)
+    d.polygon([(S * 0.70, S * 0.50), (S * 0.99, S * 0.36), (S * 0.88, S * 0.68)],
+              fill=body, outline=outline)
 
-    # ear tufts (say "bird" instantly)
-    for ex, sign in ((-0.24, -1), (0.24, 1)):
-        tx = cx + ex * S
-        d.polygon([(tx, S * 0.30), (tx + sign * S * 0.10, S * 0.05), (tx + sign * S * 0.16, S * 0.26)],
-                  fill=body, outline=outline)
+    # feet
+    for fx in (0.46, 0.60):
+        x = S * fx
+        d.line([(x, S * 0.80), (x, by)], fill=ORANGE_DEEP, width=int(S * 0.022))
+        for dx in (-0.025, 0.025):
+            d.line([(x, by), (x + dx * S, by + S * 0.03)], fill=ORANGE_DEEP, width=int(S * 0.018))
 
-    # body/head (one owl egg)
-    d.ellipse([S * 0.14, S * 0.16, S * 0.86, S * 0.92], body, outline=outline, width=ow)
-    # belly
-    d.ellipse([S * 0.34, S * 0.52, S * 0.66, S * 0.88], BELLY if body == PAPER else body)
+    # plump body facing left
+    d.ellipse([S * 0.28, S * 0.40, S * 0.82, S * 0.84], body, outline=outline, width=ow)
+    d.ellipse([S * 0.38, S * 0.54, S * 0.66, S * 0.82], BELLY if body == PAPER else body)  # belly
 
-    # wings
-    d.pieslice([S * 0.10, S * 0.34, S * 0.42, S * 0.86], 70, 210, fill=body, outline=outline, width=ow)
-    d.pieslice([S * 0.58, S * 0.34, S * 0.90, S * 0.86], 330, 110, fill=body, outline=outline, width=ow)
+    # head (upper-left), tilted down when peering
+    hy = S * (0.22 + bob * 0.02)
+    head = [S * 0.14, hy, S * 0.52, hy + S * 0.40]
+    d.ellipse(head, body, outline=outline, width=ow)
+    hcx = (head[0] + head[2]) / 2
+    hcy = (head[1] + head[3]) / 2
 
-    # eyes — big owl discs, close together, pupils cast down
-    eye_r = S * 0.155
-    eyc = S * 0.42 + tilt * S * 0.02
-    for ex in (-0.155, 0.155):
-        exc = cx + ex * S
-        # eye disc ring
-        d.ellipse([exc - eye_r, eyc - eye_r, exc + eye_r, eyc + eye_r], WHITE, outline=outline, width=int(S * 0.012))
-        if blink:
-            d.line([(exc - eye_r * 0.7, eyc), (exc + eye_r * 0.7, eyc)], fill=outline, width=int(S * 0.02))
-        else:
-            pr = eye_r * 0.62
-            px = exc + look[0] * eye_r * 0.34
-            py = eyc + look[1] * eye_r * 0.40
-            d.ellipse([px - pr, py - pr, px + pr, py + pr], PUPIL)
-            d.ellipse([px - pr * 0.1, py - pr * 0.6, px + pr * 0.35, py], WHITE)  # catchlight
+    # single rounded crest feather (never a horn)
+    d.ellipse([hcx - S * 0.028, head[1] - S * 0.05, hcx + S * 0.028, head[1] + S * 0.02],
+              body, outline=outline, width=int(S * 0.011))
 
-    # beak — prominent orange downward triangle between the eyes
-    d.polygon([(cx - S * 0.06, eyc + eye_r * 0.55), (cx + S * 0.06, eyc + eye_r * 0.55),
-               (cx, eyc + eye_r * 1.35)], fill=ORANGE, outline=outline)
+    # beak pointing forward-left and slightly down (looking down)
+    bx = head[0] + S * 0.015
+    d.polygon([(bx, hcy - S * 0.005), (bx, hcy + S * 0.055), (bx - S * 0.13, hcy + S * 0.055)],
+              fill=ORANGE, outline=outline)
 
-    return big.resize((size, size), Image.LANCZOS)
+    # wing on the body
+    d.ellipse([S * 0.42, S * 0.50, S * 0.74, S * 0.80], body, outline=outline, width=ow)
+
+    # one eye, pupil cast low = looking down
+    ex, ey = hcx + S * 0.03, hcy - S * 0.01
+    er = S * 0.08
+    d.ellipse([ex - er, ey - er, ex + er, ey + er], WHITE, outline=outline, width=int(S * 0.012))
+    if blink:
+        d.line([(ex - er * 0.7, ey), (ex + er * 0.7, ey)], fill=outline, width=int(S * 0.02))
+    else:
+        pr = er * 0.55
+        px = ex
+        py = ey + (0.35 + look * 0.45) * er
+        d.ellipse([px - pr, py - pr, px + pr, py + pr], PUPIL)
+        d.ellipse([px - pr * 0.1, py - pr * 0.6, px + pr * 0.35, py], WHITE)
+
+    return img.resize((size, size), Image.LANCZOS)
 
 
 def make_rest():
-    draw_owl(256, look=(0.0, 0.72)).save(os.path.join(ASSETS, "bird-rest.png"))
+    draw_bird(256, look=0.65).save(os.path.join(ASSETS, "bird-rest.png"))
     print("wrote assets/bird-rest.png")
 
 
 def make_gif():
-    # brief, one-shot-friendly: rest -> tilt/glance -> blink -> rest
     seq = [
-        ((0.0, 0.72), False, 0.0, 8),
-        ((-0.5, 0.8), False, -0.5, 4),
-        ((0.4, 0.8),  False, 0.4, 4),
-        ((0.0, 0.72), True,  0.0, 3),
-        ((0.0, 0.72), False, 0.0, 8),
+        (0.65, False, 0.0, 9),   # rest, looking down
+        (0.85, False, 0.6, 4),   # peer lower (head bob)
+        (0.65, False, 0.0, 5),   # back up
+        (0.65, True,  0.0, 3),   # blink
+        (0.65, False, 0.0, 9),   # rest
     ]
     frames, durations = [], []
-    for look, blink, tilt, hold in seq:
-        frames.append(draw_owl(96, look=look, blink=blink, tilt=tilt))
+    for look, blink, bob, hold in seq:
+        frames.append(draw_bird(96, look=look, blink=blink, bob=bob))
         durations.append(hold * 26)
     frames[0].save(
         os.path.join(ASSETS, "bird.gif"),
         save_all=True, append_images=frames[1:], duration=durations,
-        disposal=2, transparency=0, optimize=False,   # no loop extension -> plays through
+        disposal=2, transparency=0, optimize=False,
     )
     print("wrote assets/bird.gif")
 
@@ -115,8 +119,8 @@ def make_icon_source():
     d = ImageDraw.Draw(img)
     d.rounded_rectangle([40, 40, S - 40, S - 40], radius=220, fill=(*INK, 255))
     d.rounded_rectangle([40, 40, S - 40, S - 40], radius=220, outline=(*ORANGE, 255), width=10)
-    owl = draw_owl(760, look=(0.05, 0.72))
-    img.alpha_composite(owl, (int((S - 760) / 2), int((S - 760) / 2) + 20))
+    bird = draw_bird(780)
+    img.alpha_composite(bird, (int((S - 780) / 2), int((S - 780) / 2) + 10))
     img.save(os.path.join(ASSETS, "bird-1024.png"))
     print("wrote assets/bird-1024.png")
 
@@ -125,5 +129,3 @@ if __name__ == "__main__":
     make_rest()
     make_gif()
     make_icon_source()
-    # The menu-bar glyph now uses Apple's bird.fill SF Symbol (see AppDelegate),
-    # so no hand-drawn menu-bar asset is generated.
