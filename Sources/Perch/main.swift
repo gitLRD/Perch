@@ -1,0 +1,3 @@
+import PerchCore
+
+PerchApp.main()
