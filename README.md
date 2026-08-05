@@ -15,7 +15,7 @@ A native macOS floating mini-window that shows, at a glance, **which Claude Code
 
 ## Install (for users)
 
-1. Download **`Perch-<version>-macos.zip`** from the [latest release](https://github.com/gitLRD/perch/releases/latest) and unzip it.
+1. Download **`Perch-<version>-macos.zip`** from the [latest release](https://github.com/gitLRD/Perch/releases/latest) and unzip it.
 2. Open **Terminal**, `cd` into the unzipped `Perch` folder, and run:
    ```bash
    ./install.sh

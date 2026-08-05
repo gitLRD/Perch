@@ -4,8 +4,8 @@ import Foundation
 /// works once the repo is public; on a private repo (or offline) it fails
 /// gracefully and callers fall back to opening the releases page.
 public final class Updater {
-    public static let releasesPage = URL(string: "https://github.com/gitLRD/perch/releases/latest")!
-    private let apiURL = URL(string: "https://api.github.com/repos/gitLRD/perch/releases/latest")!
+    public static let releasesPage = URL(string: "https://github.com/gitLRD/Perch/releases/latest")!
+    private let apiURL = URL(string: "https://api.github.com/repos/gitLRD/Perch/releases/latest")!
     private let currentVersion: String
     private let lastCheckKey = "PerchLastUpdateCheck"
 
