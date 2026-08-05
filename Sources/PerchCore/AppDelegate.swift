@@ -5,7 +5,9 @@ import UserNotifications
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
+    private var toggleItem: NSMenuItem!
     private var panel: FloatingPanel!
+    private var hosting: NSHostingView<PerchView>!
     private var store: SessionStore!
     private var watcher: DirectoryWatcher!
     private var detector = TransitionDetector()
@@ -29,21 +31,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         applyMenuBarIcon(waiting: 0)
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Show/Hide Perch", action: #selector(togglePanel), keyEquivalent: "p"))
+        menu.delegate = self
+        toggleItem = NSMenuItem(title: "Hide Window", action: #selector(togglePanel), keyEquivalent: "p")
+        menu.addItem(toggleItem)
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Perch", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
 
-        panel = FloatingPanel(contentRect: NSRect(x: 0, y: 0, width: 260, height: 320))
-        panel.contentView = NSHostingView(rootView: PerchView(
+        panel = FloatingPanel(contentRect: NSRect(x: 0, y: 0, width: 262, height: 320))
+        hosting = NSHostingView(rootView: PerchView(
             store: store,
             onJump: { [weak self] s in
                 guard let self else { return }
                 self.dispatcher.run(self.dispatcher.command(for: s), dryRun: false)
             },
             onDismiss: { [weak self] s in self?.store.dismiss(s) },
+            onClose: { [weak self] in self?.hidePanel() },
             clock: clock))
-        positionTopRight()
+        panel.contentView = hosting
+        resizeToFit()
         panel.orderFrontRegardless()
 
         watcher = DirectoryWatcher(url: perchDir) { [weak self] in self?.refresh() }
@@ -58,6 +64,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.reload()
         for s in detector.newlyWaiting(store.sessions) { notifier.notify(s) }
         applyMenuBarIcon(waiting: store.sessions.filter { $0.state == .waiting }.count)
+        resizeToFit()
+    }
+
+    /// Shrink the panel to the card's natural height so the transparent area
+    /// below it isn't an invisible click-catcher.
+    private func resizeToFit() {
+        let fit = hosting.fittingSize
+        let height = max(90, fit.height)
+        panel.setContentSize(NSSize(width: 262, height: height))
+        positionTopRight()
     }
 
     private func applyMenuBarIcon(waiting: Int) {
@@ -81,7 +97,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func togglePanel() {
-        panel.isVisible ? panel.orderOut(nil) : panel.orderFrontRegardless()
+        panel.isVisible ? hidePanel() : showPanel()
+    }
+
+    private func hidePanel() {
+        panel.orderOut(nil)
+        toggleItem?.title = "Show Window"
+    }
+
+    private func showPanel() {
+        resizeToFit()
+        panel.orderFrontRegardless()
+        toggleItem?.title = "Hide Window"
+    }
+}
+
+extension AppDelegate: NSMenuDelegate {
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        toggleItem?.title = panel.isVisible ? "Hide Window" : "Show Window"
     }
 }
 

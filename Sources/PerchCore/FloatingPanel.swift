@@ -13,6 +13,9 @@ final class FloatingPanel: NSPanel {
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         hidesOnDeactivate = false
         isMovableByWindowBackground = true
+        isOpaque = false
+        backgroundColor = .clear
+        hasShadow = false   // the SwiftUI card draws its own shadow
         titleVisibility = .hidden
         titlebarAppearsTransparent = true
         standardWindowButton(.closeButton)?.isHidden = true
