@@ -4,8 +4,17 @@ let package = Package(
     name: "Perch",
     platforms: [.macOS(.v13)],
     targets: [
-        .executableTarget(name: "Perch", path: "Sources/Perch"),
-        .testTarget(name: "PerchTests", dependencies: ["Perch"], path: "Tests/PerchTests",
-                    resources: [.copy("Fixtures")])
+        .target(
+            name: "PerchCore",
+            path: "Sources/PerchCore",
+            swiftSettings: [.unsafeFlags(["-enable-testing"], .when(configuration: .debug))]
+        ),
+        .executableTarget(name: "Perch", dependencies: ["PerchCore"], path: "Sources/Perch"),
+        .executableTarget(
+            name: "PerchTestRunner",
+            dependencies: ["PerchCore"],
+            path: "Tests/PerchTests",
+            resources: [.copy("Fixtures")]
+        ),
     ]
 )
