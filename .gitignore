@@ -1,4 +1,6 @@
 .build/
 *.app
+dist/
+*.zip
 assets/*.tmp
 .DS_Store
