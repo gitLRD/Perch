@@ -89,14 +89,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func applyMenuBarIcon(waiting: Int) {
         guard let button = statusItem.button else { return }
-        if let url = Bundle.main.url(forResource: "bird-menubar", withExtension: "png"),
-           let img = NSImage(contentsOf: url) {
+        // Apple's SF Symbol renders a crisp, correctly-tinted bird in the menu
+        // bar (white on a dark bar) — far more legible than a hand-drawn glyph.
+        let config = NSImage.SymbolConfiguration(pointSize: 15, weight: .semibold)
+        if let img = NSImage(systemSymbolName: "bird.fill", accessibilityDescription: "Perch")?
+            .withSymbolConfiguration(config) {
             img.isTemplate = true
             button.image = img
+            button.imagePosition = .imageLeading
             button.title = waiting > 0 ? " \(waiting)" : ""
         } else {
             button.image = nil
-            button.title = waiting > 0 ? "🐦\(waiting)" : "🐦"
+            button.title = waiting > 0 ? "🐦 \(waiting)" : "🐦"
         }
     }
 
