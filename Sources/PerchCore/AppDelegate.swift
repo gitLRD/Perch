@@ -20,6 +20,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let updater = Updater(currentVersion: PerchVersion)
     private var updateItem: NSMenuItem!
     private var updateURL: URL?
+    private var park = ParkController()
+    private var isProgrammaticMove = false
+    private var parkTimer: Timer?
 
     private var perchDir: URL {
         let u = URL(fileURLWithPath: NSHomeDirectory() + "/.claude/perch")
@@ -70,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onClose: { [weak self] in self?.hidePanel() },
             clock: clock))
         panel.contentView = hosting
+        panel.delegate = self
         resizeToFit()
         panel.orderFrontRegardless()
 
@@ -79,6 +83,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.store.reload() }
+        }
+
+        parkTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.flyHomeIfDue() }
         }
 
         // Auto-update: check on launch if a week has elapsed, then re-evaluate daily.
@@ -146,7 +154,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let fit = hosting.fittingSize
         let height = max(90, fit.height)
         panel.setContentSize(NSSize(width: 262, height: height))
-        positionTopRight()
+        // While the user has shoved the panel aside, leave it where they put
+        // it — only resize. It flies home on its own via flyHomeIfDue().
+        if !park.isParked { positionTopRight() }
     }
 
     private func applyMenuBarIcon(waiting: Int) {
@@ -169,8 +179,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func positionTopRight() {
         guard let screen = NSScreen.main else { return }
         let vf = screen.visibleFrame
+        isProgrammaticMove = true
         panel.setFrameOrigin(NSPoint(x: vf.maxX - panel.frame.width - 16,
                                      y: vf.maxY - panel.frame.height - 16))
+        isProgrammaticMove = false
+    }
+
+    /// The panel has been parked long enough — animate it back to the corner.
+    private func flyHomeIfDue() {
+        guard park.isParked, park.shouldFlyHome(now: clock.now()) else { return }
+        park.reset()
+        guard let screen = NSScreen.main else { return }
+        let vf = screen.visibleFrame
+        let home = NSRect(x: vf.maxX - panel.frame.width - 16,
+                          y: vf.maxY - panel.frame.height - 16,
+                          width: panel.frame.width, height: panel.frame.height)
+        isProgrammaticMove = true
+        panel.setFrame(home, display: true, animate: true)
+        isProgrammaticMove = false
+        bird.poke()
     }
 
     @objc func togglePanel() {
@@ -183,10 +210,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showPanel() {
+        park.reset()
         resizeToFit()
         panel.orderFrontRegardless()
         bird.poke()
         toggleItem?.title = "Hide Window"
+    }
+}
+
+extension AppDelegate: NSWindowDelegate {
+    func windowDidMove(_ notification: Notification) {
+        // Ignore our own repositioning / fly-home animation; only a real drag
+        // by the user shoves the panel aside and arms the fly-home timer.
+        guard !isProgrammaticMove else { return }
+        park.didDrag(now: clock.now())
     }
 }
 

@@ -25,7 +25,6 @@ final class FloatingPanel: NSPanel {
         standardWindowButton(.miniaturizeButton)?.isHidden = true
         standardWindowButton(.zoomButton)?.isHidden = true
         isReleasedWhenClosed = false
-        setFrameAutosaveName("PerchPanel")
     }
 
     // Rows need to receive clicks, but the app itself never activates.

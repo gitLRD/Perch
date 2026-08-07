@@ -38,7 +38,7 @@ Look for the 🐦 in your menu bar; the floating panel sits in the top-right cor
 - **Mark a session done** — click the ✓ on its row to clear it. If that session later works and stops again, it reappears (a fresh thing needs you).
 - **Hide the window** — click the ✕ in the header, or use **Hide Window** from the 🐦 menu. Bring it back with **Show Window** (or ⌘P) from the same menu.
 - **Notifications** — when a session newly starts waiting, Perch posts a notification; clicking it jumps you to that session.
-- **Move it** — drag the panel anywhere; it remembers where you put it.
+- **Shove it aside** — drag the panel out of the way when it's covering something; the spot it leaves is instantly clickable. It flies back to the top-right after 15 seconds (each nudge resets the timer).
 - **Updates** — Perch checks for a new release weekly and adds an "Update available" item to the menu when there is one; run **Check for Updates…** anytime. (The check uses the public GitHub releases API, so it's active once the repo is public.)
 
 > **When do sessions appear?** A session shows up the first time it fires a hook *after* you install Perch — i.e. its next turn (a prompt, a stop, or a permission request). Sessions that were already mid-work or sitting idle from before the install stay invisible until they next do something.
